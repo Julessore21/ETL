@@ -1,0 +1,7 @@
+{
+  "count": 100,
+  "pages": 1,
+  "base_url": "https://world.openfoodfacts.org/cgi/search.pl",
+  "fields": "code,product_name,brands,nutriscore_grade,nutriments,ingredients_text,categories",
+  "generated_at": "2025-10-08T09:41:41.912388Z"
+}

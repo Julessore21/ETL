@@ -1,8 +1,11 @@
 unit_conversions:
-  - {{from: "kJ", to: "kcal", factor: 0.239006}}
-  - {{from: "g", to: "g", factor: 1}}
-  - {{from: "mg", to: "mg", factor: 1}}
-  - {{from: "µg", to: "mg", factor: 0.001}}
+  - { from: "kJ", to: "kcal", factor: 0.239006 }
+  - { from: "kcal", to: "kcal", factor: 1 }
+  - { from: "g", to: "g", factor: 1 }
+  - { from: "g", to: "mg", factor: 1000 }
+  - { from: "mg", to: "g", factor: 0.001 }
+  - { from: "mg", to: "mg", factor: 1 }
+  - { from: "µg", to: "mg", factor: 0.001 }
 
 nutrient_targets:
   energy_100g: "kcal"
