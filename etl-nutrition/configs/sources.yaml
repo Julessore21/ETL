@@ -1,0 +1,4 @@
+openfoodfacts:
+  base_url: "https://world.openfoodfacts.org/cgi/search.pl"
+  page_size: 1000
+  fields: ["code","product_name","brands","nutriscore_grade","nutriments","ingredients_text","categories"]

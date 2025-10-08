@@ -1,0 +1,16 @@
+unit_conversions:
+  - {{from: "kJ", to: "kcal", factor: 0.239006}}
+  - {{from: "g", to: "g", factor: 1}}
+  - {{from: "mg", to: "mg", factor: 1}}
+  - {{from: "µg", to: "mg", factor: 0.001}}
+
+nutrient_targets:
+  energy_100g: "kcal"
+  fat_100g: "g"
+  saturated-fat_100g: "g"
+  carbohydrates_100g: "g"
+  sugars_100g: "g"
+  fiber_100g: "g"
+  proteins_100g: "g"
+  salt_100g: "g"
+  sodium_100g: "mg"
