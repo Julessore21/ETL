@@ -1,5 +1,47 @@
 # ETL Nutrition & Alimentation
 
+## Commandes Majeures (Windows/PowerShell)
+- Se placer dans le sous‑projet
+  - `cd C:\Users\sore-larregain\Desktop\Workspace\Ynov\ETL\ETL\etl-nutrition`
+
+- Docker Postgres
+  - `docker compose up -d`
+  - `docker compose ps`
+  - `docker compose logs -f db`
+  - `docker compose down`
+
+- Dépendances Python
+  - `pip install -r requirements.txt`
+
+- Variables d’environnement (exemples)
+  - ` $env:DB_URL = "postgresql+psycopg://user:pass@localhost:5432/food" `
+  - ` $env:OFF_PAGE_SIZE = "1000" `
+  - ` $env:OFF_MAX_PAGES = "50" `
+  - ` $env:SMOKE_FAIL_ON_DQ = "1" `
+
+- Test rapide (logs détaillés + rapport DQ JSON)
+  - `python -m tests.run_pipeline_smoke`
+  - Capturer logs: `python -m tests.run_pipeline_smoke *>&1 | Tee-Object -FilePath logs\smoke_$(Get-Date -Format yyyyMMdd_HHmmss).log`
+  - Rapport: `logs\last_run_report_YYYYMMDD_HHMMSS.json`
+
+- Flow Prefect (end‑to‑end)
+  - `python flows/etl_daily.py`
+
+- Étapes individuelles
+  - Init schéma: `python -m database.init_db`
+  - Extraction OFF: `python -m scripts.extract.openfoodfacts`
+  - Consolidation: `python -m scripts.transform.consolidate_off`
+  - Harmonisation: `python -m scripts.transform.harmonize_units`
+  - Chargement DB: `python -m scripts.load.load_fact_tables`
+
+- Lookup produit (scan code‑barres)
+  - `python -m scripts.query.product_lookup <barcode>`
+
+- Emplacements de données
+  - Raw: `data\raw\YYYYMMDD\openfoodfacts\off_p*.json`
+  - Intermédiaire: `data\processed\tmp_products.jsonl`
+  - Harmonisé: `data\processed\products_harmonized.jsonl`
+
 Ce dépôt contient le **pipeline ETL** (Extract–Transform–Load) du projet fil rouge *Application Data Nutrition & Alimentation* (Masters Data & IA – Ynov 2025–2026).  
 Objectif : produire un **jeu de données propre, structuré et centralisé** à partir de sources variées (Open Food Facts, Agribalyse, sites de recettes) pour la visualisation et l’IA.
 

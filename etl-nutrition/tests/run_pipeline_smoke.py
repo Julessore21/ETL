@@ -43,6 +43,7 @@ def _db_counts(db_url: str) -> dict:
 def main():
     start = time.time()
     db_url = os.getenv("DB_URL", "postgresql+psycopg://user:pass@localhost:5432/food")
+    fail_on_dq = os.getenv("SMOKE_FAIL_ON_DQ", "0") not in ("0", "false", "False", "")
 
     # Tune extraction for a quick smoke test
     os.environ.setdefault("OFF_PAGE_SIZE", "200")
@@ -96,6 +97,52 @@ def main():
         pass
     _log(f"→ Harmonisation terminée en {time.time()-t0:.2f}s")
 
+    # 4bis) Data Quality checks (basiques)
+    import pandas as pd
+    dq_t0 = time.time()
+    _log("[4bis] Contrôles qualité de base")
+    df = pd.read_json(out_path, lines=True)
+    checks = {}
+    # Taux de non-null sur colonnes clés
+    for col in ["code", "product_name", "brands"]:
+        if col in df.columns:
+            nn = int(df[col].notna().sum())
+            checks[f"nonnull_{col}"] = {"count": nn, "ratio": nn / max(len(df), 1)}
+    # Bornes plausibles
+    def within(series, low, high):
+        s = series.dropna()
+        bad = int(((s < low) | (s > high)).sum())
+        return {"violations": bad, "tested": int(s.shape[0])}
+    if "energy_100g" in df.columns:
+        checks["bounds_energy_kcal_100g"] = within(df["energy_100g"], 0, 1200)
+    if "sodium_100g" in df.columns:
+        checks["bounds_sodium_mg_100g"] = within(df["sodium_100g"], 0, 5000)
+    # Rapport JSON
+    logs_dir = Path("logs")
+    logs_dir.mkdir(exist_ok=True)
+    report = {
+        "started_at": datetime.now().isoformat(),
+        "db_url": db_url,
+        "raw_dir": str(raw_dir) if 'raw_dir' in locals() else None,
+        "tmp_path": str(tmp_path),
+        "out_path": str(out_path),
+        "counts": {
+            "raw_pages": len(list(Path(raw_dir).glob("off_p*.json"))) if 'raw_dir' in locals() else None,
+            "tmp_lines": out_lines,
+        },
+        "dq_checks": checks,
+    }
+    rep_path = logs_dir / f"last_run_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    rep_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    _log(f"→ DQ checks terminés en {time.time()-dq_t0:.2f}s (rapport: {rep_path})")
+    # Option: échouer avant load si DQ ko
+    if fail_on_dq:
+        violations = sum(v.get("violations", 0) for k, v in checks.items() if k.startswith("bounds_"))
+        min_nonnull_ok = all(v.get("ratio", 1) >= 0.9 for k, v in checks.items() if k.startswith("nonnull_"))
+        if violations > 0 or not min_nonnull_ok:
+            _log("Des contrôles qualité ont échoué; arrêt avant chargement (SMOKE_FAIL_ON_DQ=1)")
+            return 3
+
     # 5) Load into DB
     t0 = time.time()
     _log("[5/5] Chargement DB (upsert dims + facts)")
@@ -110,4 +157,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
